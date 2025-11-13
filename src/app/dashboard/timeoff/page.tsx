@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Plus, Check, X } from 'lucide-react';
+import { Plus, Check, X, Download } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 interface TimeOffRequest {
@@ -83,6 +83,26 @@ export default function TimeOffPage() {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const response = await api.get('/timeoff/export', {
+        responseType: 'blob',
+      });
+      
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `timeoff-requests-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -90,10 +110,18 @@ export default function TimeOffPage() {
           <h1 className="text-3xl font-bold">Time Off Requests</h1>
           <p className="text-muted-foreground">Manage time-off requests</p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Request
-        </Button>
+        <div className="flex gap-2">
+          {user?.role === 'admin' && (
+            <Button variant="outline" onClick={handleExportCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          )}
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Request
+          </Button>
+        </div>
       </div>
 
       <Card>

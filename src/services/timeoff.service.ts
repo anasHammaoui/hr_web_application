@@ -124,4 +124,34 @@ export class TimeOffService {
       pending: pendingCount,
     };
   }
+
+  /**
+   * Export time-off requests to CSV format
+   */
+  async exportTimeOffRequestsToCSV() {
+    const requests = await this.timeOffDAO.findAllForExport();
+    
+    // CSV headers
+    const headers = ['ID', 'Employee Name', 'Employee Email', 'Start Date', 'End Date', 'Reason', 'Status', 'Admin Note', 'Created At'];
+    
+    // CSV rows
+    const rows = requests.map((request: any) => [
+      request.id,
+      request.user.name,
+      request.user.email,
+      new Date(request.startDate).toISOString().split('T')[0],
+      new Date(request.endDate).toISOString().split('T')[0],
+      request.reason || '',
+      request.status,
+      request.adminNote || '',
+      new Date(request.createdAt).toISOString().split('T')[0]
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [headers, ...rows]
+      .map((row: any[]) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    return csvContent;
+  }
 }

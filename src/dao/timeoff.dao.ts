@@ -154,4 +154,22 @@ export class TimeOffDAO extends BaseDAO {
       },
     });
   }
+
+  /**
+   * Get all time-off requests for export
+   */
+  async findAllForExport() {
+    return this.prisma.timeOffRequest.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

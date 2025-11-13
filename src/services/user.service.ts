@@ -127,4 +127,33 @@ export class UserService {
       employees: employeeCount,
     };
   }
+
+  /**
+   * Export users to CSV format
+   */
+  async exportUsersToCSV() {
+    const users = await this.userDAO.findAll();
+    
+    // CSV headers
+    const headers = ['ID', 'Name', 'Email', 'Role', 'Job Position', 'Birthday', 'Date Hired', 'Status'];
+    
+    // CSV rows
+    const rows = users.map((user: any) => [
+      user.id,
+      user.name,
+      user.email,
+      user.role,
+      user.jobPosition || '',
+      user.birthday ? new Date(user.birthday).toISOString().split('T')[0] : '',
+      user.dateHired ? new Date(user.dateHired).toISOString().split('T')[0] : '',
+      'Active'
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [headers, ...rows]
+      .map((row: any[]) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    return csvContent;
+  }
 }

@@ -100,6 +100,25 @@ export class UserDAO extends BaseDAO {
   }
 
   /**
+   * Get all users (for export)
+   */
+  async findAll() {
+    return this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        jobPosition: true,
+        birthday: true,
+        dateHired: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  /**
    * Create new user
    */
   async create(data: CreateUserDTO): Promise<User> {
