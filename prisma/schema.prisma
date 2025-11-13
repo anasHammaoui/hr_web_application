@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  employee
+}
+
+enum TimeOffStatus {
+  pending
+  approved
+  rejected
+}
+
+model User {
+  id              String            @id @default(uuid())
+  name            String
+  email           String            @unique
+  passwordHash    String
+  role            Role              @default(employee)
+  jobPosition     String?
+  birthday        DateTime?
+  dateHired       DateTime?
+  profilePicture  String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  scores          Score[]
+  enrollments     Enrollment[]
+  timeOffRequests TimeOffRequest[]
+  
+  @@map("users")
+}
+
+model Evaluation {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  
+  scores    Score[]
+  
+  @@map("evaluations")
+}
+
+model Score {
+  id           String     @id @default(uuid())
+  userId       String
+  evaluationId String
+  score        Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, evaluationId])
+  @@map("scores")
+}
+
+model Course {
+  id          String       @id @default(uuid())
+  title       String
+  description String       @db.Text
+  imageUrl    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  enrollments Enrollment[]
+  
+  @@map("courses")
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  userId     String
+  courseId   String
+  enrolledAt DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+model TimeOffRequest {
+  id        String         @id @default(uuid())
+  userId    String
+  startDate DateTime
+  endDate   DateTime
+  reason    String         @db.Text
+  status    TimeOffStatus  @default(pending)
+  adminNote String?        @db.Text
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("time_off_requests")
+}
