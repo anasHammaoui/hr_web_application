@@ -39,6 +39,7 @@ export default function EmployeesPage() {
     password: '',
     role: 'employee',
     jobPosition: '',
+    profilePicture: '',
   });
 
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function EmployeesPage() {
     try {
       await api.post('/users', formData);
       setShowCreateDialog(false);
-      setFormData({ name: '', email: '', password: '', role: 'employee', jobPosition: '' });
+      setFormData({ name: '', email: '', password: '', role: 'employee', jobPosition: '', profilePicture: '' });
       fetchUsers();
     } catch (error) {
       console.error('Failed to create user:', error);
@@ -268,6 +269,16 @@ export default function EmployeesPage() {
                 id="jobPosition"
                 value={formData.jobPosition}
                 onChange={(e) => setFormData({ ...formData, jobPosition: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="profilePicture">Profile Picture URL (optional)</Label>
+              <Input
+                id="profilePicture"
+                type="url"
+                placeholder="https://example.com/profile.jpg"
+                value={formData.profilePicture}
+                onChange={(e) => setFormData({ ...formData, profilePicture: e.target.value })}
               />
             </div>
             <div>

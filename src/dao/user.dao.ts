@@ -164,6 +164,20 @@ export class UserDAO extends BaseDAO {
   }
 
   /**
+   * Count new employees since a specific date
+   */
+  async countNewEmployees(since: Date): Promise<number> {
+    return this.prisma.user.count({
+      where: {
+        role: 'employee',
+        createdAt: {
+          gte: since
+        }
+      }
+    });
+  }
+
+  /**
    * Check if email exists
    */
   async emailExists(email: string, excludeUserId?: string): Promise<boolean> {

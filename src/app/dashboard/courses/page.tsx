@@ -6,7 +6,11 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { BookOpen, Users, Plus } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -34,6 +38,12 @@ export default function CoursesPage() {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newCourse, setNewCourse] = useState({
+    title: '',
+    description: '',
+    imageUrl: '',
+  });
 
   useEffect(() => {
     fetchCourses();
@@ -68,15 +78,93 @@ export default function CoursesPage() {
     }
   };
 
+  const handleAddCourse = async () => {
+    try {
+      const courseData = {
+        title: newCourse.title,
+        description: newCourse.description,
+        ...(newCourse.imageUrl && { imageUrl: newCourse.imageUrl }),
+      };
+      
+      await api.post('/courses', courseData);
+      setIsAddDialogOpen(false);
+      setNewCourse({ title: '', description: '', imageUrl: '' });
+      fetchCourses();
+    } catch (error) {
+      console.error('Failed to add course:', error);
+    }
+  };
+
   const isEnrolled = (course: Course) => {
     return course.enrollments.some((e) => e.user.id === user?.id);
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Courses</h1>
-        <p className="text-muted-foreground">Browse and enroll in training courses</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Courses</h1>
+          <p className="text-muted-foreground">Browse and enroll in training courses</p>
+        </div>
+        {user?.role === 'admin' && (
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Course
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Course</DialogTitle>
+                <DialogDescription>
+                  Create a new training course for employees to enroll in.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={newCourse.title}
+                    onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+                    placeholder="Enter course title"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={newCourse.description}
+                    onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                    placeholder="Enter course description"
+                    rows={4}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl">Image URL (optional)</Label>
+                  <Input
+                    id="imageUrl"
+                    value={newCourse.imageUrl}
+                    onChange={(e) => setNewCourse({ ...newCourse, imageUrl: e.target.value })}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAddCourse}
+                  disabled={!newCourse.title || !newCourse.description}
+                >
+                  Add Course
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {loading ? (

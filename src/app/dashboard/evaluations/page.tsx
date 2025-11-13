@@ -36,10 +36,10 @@ interface Evaluation {
 }
 
 const SCORE_BUCKETS = [
-  { label: '0-30 (Needs Improvement)', min: 0, max: 30, color: 'bg-red-500' },
-  { label: '31-50 (Below Average)', min: 31, max: 50, color: 'bg-orange-500' },
-  { label: '51-70 (Average)', min: 51, max: 70, color: 'bg-yellow-500' },
-  { label: '71-100 (Excellent)', min: 71, max: 100, color: 'bg-green-500' },
+  { label: '0-30 (Needs Improvement)', min: 0, max: 30, color: 'bg-red-500', hex: '#ef4444' },
+  { label: '31-50 (Below Average)', min: 31, max: 50, color: 'bg-orange-500', hex: '#f97316' },
+  { label: '51-70 (Average)', min: 51, max: 70, color: 'bg-yellow-500', hex: '#eab308' },
+  { label: '71-100 (Excellent)', min: 71, max: 100, color: 'bg-green-500', hex: '#22c55e' },
 ];
 
 export default function EvaluationsPage() {
@@ -282,8 +282,11 @@ export default function EvaluationsPage() {
                         <div className="flex-1">
                           <div className="h-6 bg-gray-200 rounded-full overflow-hidden">
                             <div
-                              className={`h-full transition-all ${getScoreBucket(myScore.score)?.color || 'bg-primary'}`}
-                              style={{ width: `${myScore.score}%` }}
+                              className="h-full transition-all"
+                              style={{ 
+                                width: `${myScore.score}%`,
+                                backgroundColor: getScoreBucket(myScore.score)?.hex || 'hsl(var(--primary))'
+                              }}
                             />
                           </div>
                         </div>
@@ -331,8 +334,11 @@ export default function EvaluationsPage() {
                                 </div>
                                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                                   <div
-                                    className={`h-full ${bucket.color} transition-all`}
-                                    style={{ width: `${percentage}%` }}
+                                    className="h-full transition-all"
+                                    style={{ 
+                                      width: `${percentage}%`,
+                                      backgroundColor: bucket.hex
+                                    }}
                                   />
                                 </div>
                               </div>

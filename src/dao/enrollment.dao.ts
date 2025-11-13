@@ -94,4 +94,14 @@ export class EnrollmentDAO extends BaseDAO {
       where: { courseId },
     });
   }
+
+  /**
+   * Count unique users enrolled in courses
+   */
+  async countUniqueUsers(): Promise<number> {
+    const result = await this.prisma.enrollment.groupBy({
+      by: ['userId'],
+    });
+    return result.length;
+  }
 }

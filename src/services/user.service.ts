@@ -121,10 +121,18 @@ export class UserService {
       this.userDAO.countByRole('employee'),
     ]);
 
+    // Get new employees this month
+    const thisMonthStart = new Date();
+    thisMonthStart.setDate(1);
+    thisMonthStart.setHours(0, 0, 0, 0);
+
+    const newThisMonth = await this.userDAO.countNewEmployees(thisMonthStart);
+
     return {
       total: totalUsers,
       admins: adminCount,
       employees: employeeCount,
+      newThisMonth,
     };
   }
 

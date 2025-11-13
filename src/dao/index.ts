@@ -6,3 +6,4 @@ export * from './enrollment.dao';
 export * from './evaluation.dao';
 export * from './score.dao';
 export * from './timeoff.dao';
+export * from './activity.dao';
