@@ -1,4 +1,4 @@
-import { PrismaClient, TimeOffRequest } from '@prisma/client';
+import { PrismaClient, TimeOffRequest, Prisma } from '@prisma/client';
 import { BaseDAO } from './base.dao';
 import type {
   CreateTimeOffRequestDTO,
@@ -44,7 +44,7 @@ export class TimeOffDAO extends BaseDAO {
    * Get all time-off requests with filters
    */
   async findMany(query: TimeOffRequestQuery = {}) {
-    const where: any = {};
+    const where: Prisma.TimeOffRequestWhereInput = {};
 
     if (query.userId) {
       where.userId = query.userId;

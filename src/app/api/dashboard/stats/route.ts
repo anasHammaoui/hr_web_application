@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     const dashboardService = new DashboardService(prisma);
-    const stats = await dashboardService.getDashboardStats(user.role, user.id);
+    const stats = await dashboardService.getDashboardStats(user.role, user.userId);
 
     return NextResponse.json(stats);
   } catch (error) {

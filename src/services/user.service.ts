@@ -33,7 +33,8 @@ export class UserService {
     }
 
     // Remove passwordHash from response
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...userWithoutPassword } = user;
     return userWithoutPassword as UserWithRelations;
   }
 
@@ -50,15 +51,17 @@ export class UserService {
     // Hash password
     const hashedPassword = await hashPassword(data.password);
 
-    // Create user with passwordHash
-    const { password, ...userData } = data;
-    const user = await this.userDAO.create({
-      ...userData,
-      passwordHash: hashedPassword,
-    } as any);
+    // Create user - DAO expects password field but saves as passwordHash
+    const userDataForCreate = {
+      ...data,
+      password: hashedPassword,
+    };
+    
+    const user = await this.userDAO.create(userDataForCreate);
 
     // Remove passwordHash from response
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
@@ -81,7 +84,7 @@ export class UserService {
     }
 
     // Hash password if provided
-    const updateData = { ...data } as any;
+    const updateData: Record<string, unknown> = { ...data };
     if (data.password) {
       updateData.passwordHash = await hashPassword(data.password);
       delete updateData.password;
@@ -91,7 +94,8 @@ export class UserService {
     const user = await this.userDAO.update(id, updateData);
 
     // Remove passwordHash from response
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
@@ -146,7 +150,7 @@ export class UserService {
     const headers = ['ID', 'Name', 'Email', 'Role', 'Job Position', 'Birthday', 'Date Hired', 'Status'];
     
     // CSV rows
-    const rows = users.map((user: any) => [
+    const rows = users.map((user: { id: string; name: string; email: string; role: string; jobPosition: string | null; birthday: Date | null; dateHired: Date | null }) => [
       user.id,
       user.name,
       user.email,
@@ -159,7 +163,7 @@ export class UserService {
 
     // Combine headers and rows
     const csvContent = [headers, ...rows]
-      .map((row: any[]) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .map((row: (string | number)[]) => row.map((cell: string | number) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
 
     return csvContent;

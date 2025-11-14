@@ -71,7 +71,7 @@ export class ReportService {
     const performersMap = new Map<
       string,
       {
-        user: any;
+        user: { id: string; name: string; email: string };
         totalScore: number;
         evaluationCount: number;
       }

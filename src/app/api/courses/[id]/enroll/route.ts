@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
+import { CourseService } from '@/services';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -12,27 +13,14 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const enrollment = await prisma.enrollment.create({
-      data: {
-        userId: user.userId,
-        courseId: params.id,
-      },
-      include: {
-        course: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            profilePicture: true,
-          },
-        },
-      },
-    });
+    const { id } = await params;
+    const courseService = new CourseService(prisma);
+    const enrollment = await courseService.enrollUser(user.userId, id);
 
     return NextResponse.json(enrollment, { status: 201 });
-  } catch (error: any) {
-    if (error.code === 'P2002') {
-      return NextResponse.json({ error: 'Already enrolled' }, { status: 400 });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -40,7 +28,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -48,17 +36,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await prisma.enrollment.delete({
-      where: {
-        userId_courseId: {
-          userId: user.userId,
-          courseId: params.id,
-        },
-      },
-    });
+    const { id } = await params;
+    const courseService = new CourseService(prisma);
+    await courseService.unenrollUser(user.userId, id);
 
     return NextResponse.json({ message: 'Unenrolled successfully' });
   } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

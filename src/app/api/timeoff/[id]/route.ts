@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
+import { TimeOffService } from '@/services';
 import { z } from 'zod';
 
-const updateRequestSchema = z.object({
-  status: z.enum(['pending', 'approved', 'rejected']),
-  adminNote: z.string().optional(),
+const reviewTimeOffSchema = z.object({
+  status: z.enum(['approved', 'rejected']),
 });
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -19,30 +19,23 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const data = updateRequestSchema.parse(body);
+    const { status } = reviewTimeOffSchema.parse(body);
 
-    const updatedRequest = await prisma.timeOffRequest.update({
-      where: { id: params.id },
-      data: {
-        status: data.status,
-        adminNote: data.adminNote,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profilePicture: true,
-          },
-        },
-      },
-    });
+    const { id } = await params;
+    const timeOffService = new TimeOffService(prisma);
+    const updated = await timeOffService.reviewTimeOffRequest(
+      id,
+      user.userId,
+      status
+    );
 
-    return NextResponse.json(updatedRequest);
+    return NextResponse.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

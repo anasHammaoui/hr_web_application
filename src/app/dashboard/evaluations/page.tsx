@@ -113,10 +113,13 @@ export default function EvaluationsPage() {
       setSelectedUser('');
       setScore(0);
       fetchEvaluations();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error.response as { data?: { error?: string } })?.data?.error
+        : 'Failed to assign score';
       toast({
         title: 'Error',
-        description: error.response?.data?.error || 'Failed to assign score',
+        description: errorMessage || 'Failed to assign score',
         variant: 'destructive',
       });
     } finally {
@@ -126,22 +129,22 @@ export default function EvaluationsPage() {
 
   const getMyScore = (evaluation: Evaluation) => {
     return evaluation.scores.find((s) => s.user.id === user?.id);
-  };
+  }
 
   const getAverageScore = (evaluation: Evaluation) => {
     if (evaluation.scores.length === 0) return 0;
     const sum = evaluation.scores.reduce((acc, s) => acc + s.score, 0);
     return Math.round(sum / evaluation.scores.length);
-  };
+  }
 
   const getScoreBucket = (score: number) => {
     return SCORE_BUCKETS.find(bucket => score >= bucket.min && score <= bucket.max);
-  };
+  }
 
   const getUsersWithoutScore = (evaluation: Evaluation) => {
     const scoredUserIds = evaluation.scores.map(s => s.user.id);
     return users.filter(u => !scoredUserIds.includes(u.id));
-  };
+  }
 
   return (
     <div className="space-y-6">

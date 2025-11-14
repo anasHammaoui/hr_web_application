@@ -58,7 +58,7 @@ export class UserDAO extends BaseDAO {
     const { page = 1, limit = 10, search = '', role } = query;
     const skip = this.calculateSkip(page, limit);
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (search) {
       where.OR = [

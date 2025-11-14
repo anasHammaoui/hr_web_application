@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getUserFromRequest, hashPassword } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
+import { UserService } from '@/services';
 import { z } from 'zod';
 
 const updateUserSchema = z.object({
@@ -9,14 +10,12 @@ const updateUserSchema = z.object({
   password: z.string().min(6).optional(),
   role: z.enum(['admin', 'employee']).optional(),
   jobPosition: z.string().optional(),
-  birthday: z.string().optional(),
-  dateHired: z.string().optional(),
   profilePicture: z.string().url().optional(),
 });
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -24,44 +23,29 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: params.id },
-      include: {
-        scores: {
-          include: {
-            evaluation: true,
-          },
-        },
-        enrollments: {
-          include: {
-            course: true,
-          },
-        },
-        timeOffRequests: {
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-    });
+    const { id } = await params;
+    // Check authorization
+    if (user.role !== 'admin' && user.userId !== id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const userService = new UserService(prisma);
+    const targetUser = await userService.getUserById(id);
 
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (user.role !== 'admin' && user.userId !== params.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const { passwordHash, ...userWithoutPassword } = targetUser;
-
-    return NextResponse.json(userWithoutPassword);
+    return NextResponse.json(targetUser);
   } catch (error) {
+    console.error('Get user error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -72,39 +56,17 @@ export async function PUT(
     const body = await request.json();
     const data = updateUserSchema.parse(body);
 
-    const updateData: any = {
-      name: data.name,
-      email: data.email,
-      role: data.role,
-      jobPosition: data.jobPosition,
-      birthday: data.birthday ? new Date(data.birthday) : undefined,
-      dateHired: data.dateHired ? new Date(data.dateHired) : undefined,
-      profilePicture: data.profilePicture,
-    };
-
-    if (data.password) {
-      updateData.passwordHash = await hashPassword(data.password);
-    }
-
-    const updatedUser = await prisma.user.update({
-      where: { id: params.id },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        jobPosition: true,
-        birthday: true,
-        dateHired: true,
-        profilePicture: true,
-      },
-    });
+    const { id } = await params;
+    const userService = new UserService(prisma);
+    const updatedUser = await userService.updateUser(id, data);
 
     return NextResponse.json(updatedUser);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -112,7 +74,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -120,12 +82,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await prisma.user.delete({
-      where: { id: params.id },
-    });
+    const { id } = await params;
+    const userService = new UserService(prisma);
+    await userService.deleteUser(id);
 
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

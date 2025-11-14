@@ -135,7 +135,7 @@ export class TimeOffService {
     const headers = ['ID', 'Employee Name', 'Employee Email', 'Start Date', 'End Date', 'Reason', 'Status', 'Admin Note', 'Created At'];
     
     // CSV rows
-    const rows = requests.map((request: any) => [
+    const rows = requests.map((request: { id: string; user: { name: string; email: string }; startDate: Date; endDate: Date; reason: string | null; status: string; adminNote: string | null; createdAt: Date }) => [
       request.id,
       request.user.name,
       request.user.email,
@@ -149,7 +149,7 @@ export class TimeOffService {
 
     // Combine headers and rows
     const csvContent = [headers, ...rows]
-      .map((row: any[]) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .map((row: (string | number)[]) => row.map((cell: string | number) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
 
     return csvContent;

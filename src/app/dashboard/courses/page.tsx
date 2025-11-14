@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import api from '@/lib/api';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -96,7 +97,8 @@ export default function CoursesPage() {
   };
 
   const isEnrolled = (course: Course) => {
-    return course.enrollments.some((e) => e.user.id === user?.id);
+    if (!user?.id) return false;
+    return course.enrollments.some((e) => e.user.id === user.id);
   };
 
   return (
@@ -136,7 +138,7 @@ export default function CoursesPage() {
                   <Textarea
                     id="description"
                     value={newCourse.description}
-                    onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewCourse({ ...newCourse, description: e.target.value })}
                     placeholder="Enter course description"
                     rows={4}
                   />
@@ -176,11 +178,12 @@ export default function CoursesPage() {
             return (
               <Card key={course.id} className="flex flex-col hover:shadow-lg transition-shadow">
                 {course.imageUrl && (
-                  <div className="h-48 overflow-hidden rounded-t-lg">
-                    <img
+                  <div className="h-48 overflow-hidden rounded-t-lg relative">
+                    <Image
                       src={course.imageUrl}
                       alt={course.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   </div>
                 )}
