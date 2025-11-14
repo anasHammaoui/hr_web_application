@@ -13,7 +13,7 @@ export function formatDate(date: Date | string): string {
   });
 }
 
-export function exportToCSV(data: any[], filename: string) {
+export function exportToCSV(data: Record<string, unknown>[], filename: string) {
   if (!data.length) return;
   
   const headers = Object.keys(data[0]);

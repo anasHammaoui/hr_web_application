@@ -114,10 +114,14 @@ export class CourseService {
    * Get course statistics
    */
   async getCourseStats() {
-    const totalCourses = await this.courseDAO.count();
+    const [totalCourses, enrolledUsers] = await Promise.all([
+      this.courseDAO.count(),
+      this.enrollmentDAO.countUniqueUsers()
+    ]);
 
     return {
       total: totalCourses,
+      enrolledUsers,
     };
   }
 }

@@ -58,7 +58,7 @@ export class UserDAO extends BaseDAO {
     const { page = 1, limit = 10, search = '', role } = query;
     const skip = this.calculateSkip(page, limit);
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (search) {
       where.OR = [
@@ -97,6 +97,25 @@ export class UserDAO extends BaseDAO {
       users,
       pagination: this.buildPaginationMeta(page, limit, total),
     };
+  }
+
+  /**
+   * Get all users (for export)
+   */
+  async findAll() {
+    return this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        jobPosition: true,
+        birthday: true,
+        dateHired: true,
+        createdAt: true,
+      },
+    });
   }
 
   /**
@@ -141,6 +160,20 @@ export class UserDAO extends BaseDAO {
   async countByRole(role?: 'admin' | 'employee'): Promise<number> {
     return this.prisma.user.count({
       where: role ? { role } : undefined,
+    });
+  }
+
+  /**
+   * Count new employees since a specific date
+   */
+  async countNewEmployees(since: Date): Promise<number> {
+    return this.prisma.user.count({
+      where: {
+        role: 'employee',
+        createdAt: {
+          gte: since
+        }
+      }
     });
   }
 

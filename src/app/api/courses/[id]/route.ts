@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
+import { CourseService } from '@/services';
 import { z } from 'zod';
 
 const updateCourseSchema = z.object({
@@ -9,9 +10,34 @@ const updateCourseSchema = z.object({
   imageUrl: z.string().url().optional(),
 });
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const courseService = new CourseService(prisma);
+    const course = await courseService.getCourseById(id);
+
+    if (!course) {
+      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(course);
+  } catch (error) {
+    console.error('Get course error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -22,15 +48,17 @@ export async function PUT(
     const body = await request.json();
     const data = updateCourseSchema.parse(body);
 
-    const course = await prisma.course.update({
-      where: { id: params.id },
-      data,
-    });
+    const { id } = await params;
+    const courseService = new CourseService(prisma);
+    const course = await courseService.updateCourse(id, data);
 
     return NextResponse.json(course);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -38,7 +66,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -46,12 +74,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await prisma.course.delete({
-      where: { id: params.id },
-    });
+    const { id } = await params;
+    const courseService = new CourseService(prisma);
+    await courseService.deleteCourse(id);
 
     return NextResponse.json({ message: 'Course deleted successfully' });
   } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

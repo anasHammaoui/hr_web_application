@@ -2,3 +2,7 @@
 export * from './auth.service';
 export * from './user.service';
 export * from './course.service';
+export * from './evaluation.service';
+export * from './timeoff.service';
+export * from './dashboard.service';
+export * from './report.service';

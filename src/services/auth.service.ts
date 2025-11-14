@@ -46,7 +46,7 @@ export class AuthService {
     });
 
     // Return user without password
-    const { passwordHash, ...userWithoutPassword } = user;
+    const { passwordHash: _passwordHash, ...userWithoutPassword } = user;
 
     return {
       user: {
@@ -87,7 +87,7 @@ export class AuthService {
     });
 
     // Return user without password
-    const { passwordHash, ...userWithoutPassword } = user;
+    const { passwordHash: _passwordHash, ...userWithoutPassword } = user;
 
     return {
       user: {
@@ -122,7 +122,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
       });
-    } catch (error) {
+    } catch {
       throw new Error('Invalid refresh token');
     }
   }
@@ -151,6 +151,7 @@ export class AuthService {
       return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
     return {
       ...userWithoutPassword,
