@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/users/route';
-import { PUT, DELETE } from '@/app/api/users/[id]/route';
+import { GET as GET_USER } from '@/app/api/users/[id]/route';
 import { signAccessToken } from '@/lib/auth';
 
 // Create mock service instance
@@ -8,8 +8,6 @@ const mockUserService = {
   getUsers: jest.fn(),
   getUserById: jest.fn(),
   createUser: jest.fn(),
-  updateUser: jest.fn(),
-  deleteUser: jest.fn(),
 };
 
 // Mock the UserService class
@@ -19,19 +17,8 @@ jest.mock('@/services', () => ({
 
 // Mock prisma
 jest.mock('@/lib/db', () => ({
-  prisma: {
-    user: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
-    },
-  },
+  prisma: {},
 }));
-
-import { prisma } from '@/lib/db';
 
 describe('Users API', () => {
   const adminToken = signAccessToken({
@@ -108,7 +95,7 @@ describe('Users API', () => {
         name: 'Jane Smith',
         email: 'jane@hr.com',
         password: 'password123',
-        role: 'employee' as const,
+        role: 'employee',
         jobPosition: 'Tax Specialist',
       };
 
@@ -165,61 +152,103 @@ describe('Users API', () => {
     });
   });
 
-  describe('PUT /api/users/[id]', () => {
-    it('should update a user', async () => {
-      const updatedData = {
-        name: 'John Updated',
-        jobPosition: 'Senior Accountant',
-      };
-
-      const mockUpdatedUser = {
+  describe('GET /api/users/[id]', () => {
+    it('should return user by ID for admin', async () => {
+      const mockUser = {
         id: '1',
-        name: 'John Updated',
+        name: 'John Doe',
         email: 'john@hr.com',
         role: 'employee',
-        jobPosition: 'Senior Accountant',
+        jobPosition: 'Accountant',
         birthday: null,
-        dateHired: null,
+        dateHired: '2020-01-01T00:00:00.000Z',
         profilePicture: null,
         createdAt: '2025-11-13T19:48:10.077Z',
         updatedAt: '2025-11-13T19:48:10.077Z',
+        scores: [],
+        enrollments: [],
+        timeOffRequests: [],
       };
 
-      (prisma.user.update as jest.Mock).mockResolvedValue(mockUpdatedUser);
+      mockUserService.getUserById.mockResolvedValue(mockUser);
 
       const request = new NextRequest('http://localhost:3000/api/users/1', {
-        method: 'PUT',
         headers: {
           authorization: `Bearer ${adminToken}`,
-          'content-type': 'application/json',
         },
-        body: JSON.stringify(updatedData),
       });
 
-      const response = await PUT(request, { params: { id: '1' } });
+      const response = await GET_USER(request, { params: Promise.resolve({ id: '1' }) });
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.name).toBe('John Updated');
+      expect(data.id).toBe('1');
+      expect(data.email).toBe('john@hr.com');
     });
-  });
 
-  describe('DELETE /api/users/[id]', () => {
-    it('should delete a user', async () => {
-      mockUserService.deleteUser.mockResolvedValue(undefined);
+    it('should return 404 if user not found', async () => {
+      mockUserService.getUserById.mockResolvedValue(null);
 
-      const request = new NextRequest('http://localhost:3000/api/users/1', {
-        method: 'DELETE',
+      const request = new NextRequest('http://localhost:3000/api/users/999', {
         headers: {
           authorization: `Bearer ${adminToken}`,
         },
       });
 
-      const response = await DELETE(request, { params: { id: '1' } });
-      const data = await response.json();
+      const response = await GET_USER(request, { params: Promise.resolve({ id: '999' }) });
+      expect(response.status).toBe(404);
+    });
 
+    it('should allow employee to view their own profile', async () => {
+      const employeeToken = signAccessToken({
+        userId: 'employee-id',
+        email: 'employee@hr.com',
+        role: 'employee',
+      });
+
+      const mockUser = {
+        id: 'employee-id',
+        name: 'Employee User',
+        email: 'employee@hr.com',
+        role: 'employee',
+        jobPosition: 'Developer',
+        birthday: null,
+        dateHired: '2020-01-01T00:00:00.000Z',
+        profilePicture: null,
+        createdAt: '2025-11-13T19:48:10.077Z',
+        updatedAt: '2025-11-13T19:48:10.077Z',
+        scores: [],
+        enrollments: [],
+        timeOffRequests: [],
+      };
+
+      mockUserService.getUserById.mockResolvedValue(mockUser);
+
+      const request = new NextRequest('http://localhost:3000/api/users/employee-id', {
+        headers: {
+          authorization: `Bearer ${employeeToken}`,
+        },
+      });
+
+      const response = await GET_USER(request, { params: Promise.resolve({ id: 'employee-id' }) });
       expect(response.status).toBe(200);
-      expect(data.message).toBe('User deleted successfully');
+    });
+
+    it('should return 403 if employee tries to view another user', async () => {
+      const employeeToken = signAccessToken({
+        userId: 'employee-id',
+        email: 'employee@hr.com',
+        role: 'employee',
+      });
+
+      const request = new NextRequest('http://localhost:3000/api/users/other-user-id', {
+        headers: {
+          authorization: `Bearer ${employeeToken}`,
+        },
+      });
+
+      const response = await GET_USER(request, { params: Promise.resolve({ id: 'other-user-id' }) });
+      expect(response.status).toBe(403);
     });
   });
 });
