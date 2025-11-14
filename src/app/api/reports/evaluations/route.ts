@@ -3,6 +3,54 @@ import { prisma } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
 import { ReportService } from '@/services';
 
+/**
+ * @swagger
+ * /api/reports/evaluations:
+ *   get:
+ *     tags:
+ *       - Reports
+ *     summary: Get evaluation reports
+ *     description: Retrieve comprehensive evaluation reports (Admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Evaluation reports retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   employeeId:
+ *                     type: string
+ *                     format: uuid
+ *                   employeeName:
+ *                     type: string
+ *                     example: John Doe
+ *                   averageScore:
+ *                     type: number
+ *                     example: 87.5
+ *                   totalEvaluations:
+ *                     type: integer
+ *                     example: 4
+ *                   lastEvaluationDate:
+ *                     type: string
+ *                     format: date-time
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);

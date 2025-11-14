@@ -10,6 +10,38 @@ const createTimeOffSchema = z.object({
   reason: z.string().min(1),
 });
 
+/**
+ * @swagger
+ * /api/timeoff:
+ *   get:
+ *     tags:
+ *       - Time Off
+ *     summary: Get time-off requests
+ *     description: Retrieve time-off requests. Admins see all requests, employees see only their own.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Time-off requests retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/TimeOff'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
@@ -28,6 +60,64 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * @swagger
+ * /api/timeoff:
+ *   post:
+ *     tags:
+ *       - Time Off
+ *     summary: Create time-off request
+ *     description: Submit a new time-off request
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - startDate
+ *               - endDate
+ *               - reason
+ *             properties:
+ *               startDate:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-12-01T00:00:00Z"
+ *               endDate:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-12-05T00:00:00Z"
+ *               reason:
+ *                 type: string
+ *                 example: Family vacation
+ *     responses:
+ *       201:
+ *         description: Time-off request created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TimeOff'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function POST(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);

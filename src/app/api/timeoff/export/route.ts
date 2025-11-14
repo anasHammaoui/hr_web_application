@@ -3,6 +3,37 @@ import { prisma } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
 import { TimeOffService } from '@/services';
 
+/**
+ * @swagger
+ * /api/timeoff/export:
+ *   get:
+ *     tags:
+ *       - Time Off
+ *     summary: Export time-off requests to CSV
+ *     description: Export all time-off requests to CSV format (Admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: CSV file with time-off requests data
+ *         content:
+ *           text/csv:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
