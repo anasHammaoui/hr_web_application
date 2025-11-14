@@ -16,6 +16,12 @@ export interface Score {
   score: number;
   createdAt: Date;
   updatedAt: Date;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    profilePicture: string | null;
+  };
 }
 
 export interface CreateScoreDTO {

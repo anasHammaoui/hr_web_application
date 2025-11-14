@@ -25,7 +25,7 @@ export class ScoreDAO extends BaseDAO {
   /**
    * Upsert score (create or update)
    */
-  async upsert(data: UpsertScoreDTO): Promise<Score> {
+  async upsert(data: UpsertScoreDTO) {
     const existing = await this.findByUserAndEvaluation(
       data.userId,
       data.evaluationId
@@ -35,11 +35,31 @@ export class ScoreDAO extends BaseDAO {
       return this.prisma.score.update({
         where: { id: existing.id },
         data: { score: data.score },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profilePicture: true,
+            },
+          },
+        },
       });
     }
 
     return this.prisma.score.create({
       data,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profilePicture: true,
+          },
+        },
+      },
     });
   }
 

@@ -80,7 +80,9 @@ export default function EvaluationsPage() {
   const fetchUsers = async () => {
     try {
       const response = await api.get('/users');
-      setUsers(response.data.filter((u: User) => u.role === 'employee'));
+      // Handle pagination - API returns { users: [], pagination: {} }
+      const userData = response.data.users || response.data;
+      setUsers(userData.filter((u: User) => u.role === 'employee'));
     } catch (error) {
       console.error('Failed to fetch users:', error);
     }
@@ -352,7 +354,7 @@ export default function EvaluationsPage() {
 
                       <div className="pt-4 border-t">
                         <p className="text-sm font-medium mb-3">All Scores</p>
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                        <div className={`space-y-2 ${evaluation.scores.length > 3 ? 'max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200' : ''}`}>
                           {evaluation.scores
                             .sort((a, b) => b.score - a.score)
                             .map((scoreItem) => {
@@ -361,7 +363,7 @@ export default function EvaluationsPage() {
                                 <div key={scoreItem.id} className="flex items-center justify-between p-2 bg-muted rounded-lg">
                                   <div className="flex items-center gap-3">
                                     <Avatar className="h-8 w-8">
-                                      <AvatarImage src={scoreItem.user.profilePicture} />
+                                      <AvatarImage src={scoreItem.user.profilePicture || undefined} />
                                       <AvatarFallback className="text-xs">
                                         {scoreItem.user.name.charAt(0)}
                                       </AvatarFallback>
